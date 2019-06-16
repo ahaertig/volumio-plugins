@@ -35,6 +35,7 @@ FM3Control.prototype.onStart = function() {
 	var defer=libQ.defer();
 
 	self.initSPIDevice();
+	self.initSPITimers();
 
 	// Once the Plugin has successfull started resolve the promise
 	defer.resolve();
@@ -46,6 +47,7 @@ FM3Control.prototype.onStop = function() {
     var self = this;
     var defer=libQ.defer();
 
+	self.closeSPITimers();
 	self.closeSPIDevice();
 
     // Once the Plugin has successfull stopped resolve the promise
@@ -58,8 +60,10 @@ FM3Control.prototype.onRestart = function() {
     var self = this;
 	// Optional, use if you need it
 	
+	self.closeSPITimers();
 	self.closeSPIDevice();
 	self.initSPIDevice();
+	self.initSPITimers();
 };
 
 
@@ -110,6 +114,9 @@ FM3Control.prototype.setConf = function(varName, varValue) {
 // fm-3-control specific methods
 
 FM3Control.prototype.initSPIDevice = function() {
+	var self = this;
+
+	self.logger.info('Initializing SPI device \'/dev/spidev0.0\'');
 
 	this.spi = SPI.initialize("/dev/spidev0.0");
 	this.spi.clockSpeed(1000000);
@@ -117,9 +124,51 @@ FM3Control.prototype.initSPIDevice = function() {
 };
 
 FM3Control.prototype.closeSPIDevice = function() {
+	var self = this;
+
+	self.logger.info('Closing SPI device \'/dev/spidev0.0\'');
 
 	this.spi.close(function(err){
 		self.commandRouter.logger.info('fm-3-control::onStop error closing SPI device:' + err);
 		self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::onStop error closing SPI device');
 	});
 };
+
+FM3Control.prototype.initSPITimers = function() {
+	var self = this;
+	
+	
+	var spiVolmumeTimerTimeout = setInterval(function() {  
+		
+		var txbuf = new Buffer([0x01, (9 + 0 << 4), 0x01]);
+		var volume = spi.transfer(txbuf, txbuf.length, self.spiVolumeTimer);
+		
+	}, 1000);
+	
+	self.timerTimouts = new Array(spiVolmumeTimerTimeout);
+};
+
+FM3Control.prototype.closeSPITimers = function() {
+	var self = this;
+
+	self.timerTimouts.forEach(timeout => {
+		clearInterval(timeout);
+	});
+};
+
+FM3Control.prototype.spiVolumeTimer = function(error, rxbuf) {
+    if (error) self.logger.error(error);
+    else self.logger.info(rxbuf);
+    
+    // Extract value from output buffer. Ignore first byte. 
+    var junk = rxbuf[0],
+        MSB = rxbuf[1],
+        LSB = rxbuf[2];
+
+    // Ignore first six bits of MSB, bit shift MSB 8 positions and 
+    // finally add LSB to MSB to get a full 10 bit value
+    var value = ((MSB & 3) << 8) + LSB; 
+    
+    self.logger.info(value);
+    
+}
