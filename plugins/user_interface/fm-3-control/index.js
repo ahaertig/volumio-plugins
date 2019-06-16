@@ -118,8 +118,8 @@ FM3Control.prototype.initSPIDevice = function() {
 
 	self.logger.info('Initializing SPI device \'/dev/spidev0.0\'');
 
-	this.spi = SPI.initialize("/dev/spidev0.0");
-	this.spi.clockSpeed(1000000);
+	self.spi = SPI.initialize("/dev/spidev0.0");
+	self.spi.clockSpeed(1000000);
 
 };
 
@@ -141,7 +141,7 @@ FM3Control.prototype.initSPITimers = function() {
 	var spiVolmumeTimerTimeout = setInterval(function() {  
 		
 		var txbuf = new Buffer([0x01, (9 + 0 << 4), 0x01]);
-		var volume = spi.transfer(txbuf, txbuf.length, self.spiVolumeTimer);
+		self.spi.transfer(txbuf, txbuf.length, self.spiVolumeTimer);		
 		
 	}, 1000);
 	
