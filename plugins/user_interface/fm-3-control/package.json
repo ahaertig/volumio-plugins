@@ -1,0 +1,22 @@
+{
+	"name": "fm-3-control",
+	"version": "1.0.0",
+	"description": "FM-3 radio circuit board controller",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "ahaertig",
+	"license": "ISC",
+	"volumio_info": {
+		"prettyName": "fm-3-control",
+		"icon": "fa-lightbulb-o",
+		"plugin_type": "user_interface"
+	},
+	"dependencies": {
+		"fs-extra": "^0.28.0",
+		"kew": "^0.7.0",
+		"v-conf": "^1.4.0",
+		"rpio": "1.0.x"
+	}
+}
