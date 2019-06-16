@@ -157,6 +157,8 @@ FM3Control.prototype.closeSPITimers = function() {
 };
 
 FM3Control.prototype.spiVolumeTimer = function(error, rxbuf) {
+	var self = this;
+
     if (error) self.logger.error(error);
     else self.logger.info(rxbuf);
     
