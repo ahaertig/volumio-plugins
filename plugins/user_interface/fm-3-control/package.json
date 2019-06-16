@@ -9,7 +9,7 @@
 	"author": "ahaertig",
 	"license": "ISC",
 	"volumio_info": {
-		"prettyName": "fm-3-control",
+		"prettyName": "FM-3 Control",
 		"icon": "fa-lightbulb-o",
 		"plugin_type": "user_interface"
 	},
@@ -17,6 +17,7 @@
 		"fs-extra": "^0.28.0",
 		"kew": "^0.7.0",
 		"v-conf": "^1.4.0",
-		"rpio": "1.0.x"
+		"rpio": "1.0.x",
+		"pi-spi": "1.2.0"
 	}
 }

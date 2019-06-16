@@ -1,26 +1,26 @@
 'use strict';
 
 var libQ = require('kew');
+var SPI = require('pi-spi');
+
 var fs=require('fs-extra');
 var config = new (require('v-conf'))();
 var exec = require('child_process').exec;
 var execSync = require('child_process').execSync;
 
 
-module.exports = fm-3-control;
-function fm-3-control(context) {
+module.exports = FM3Control;
+function FM3Control(context) {
 	var self = this;
 
 	this.context = context;
 	this.commandRouter = this.context.coreCommand;
 	this.logger = this.context.logger;
 	this.configManager = this.context.configManager;
-
+	
 }
 
-
-
-fm-3-control.prototype.onVolumioStart = function()
+FM3Control.prototype.onVolumioStart = function()
 {
 	var self = this;
 	var configFile=this.commandRouter.pluginManager.getConfigurationFile(this.context,'config.json');
@@ -30,10 +30,11 @@ fm-3-control.prototype.onVolumioStart = function()
     return libQ.resolve();
 }
 
-fm-3-control.prototype.onStart = function() {
+FM3Control.prototype.onStart = function() {
     var self = this;
 	var defer=libQ.defer();
 
+	self.initSPIDevice();
 
 	// Once the Plugin has successfull started resolve the promise
 	defer.resolve();
@@ -41,9 +42,11 @@ fm-3-control.prototype.onStart = function() {
     return defer.promise;
 };
 
-fm-3-control.prototype.onStop = function() {
+FM3Control.prototype.onStop = function() {
     var self = this;
     var defer=libQ.defer();
+
+	self.closeSPIDevice();
 
     // Once the Plugin has successfull stopped resolve the promise
     defer.resolve();
@@ -51,15 +54,18 @@ fm-3-control.prototype.onStop = function() {
     return libQ.resolve();
 };
 
-fm-3-control.prototype.onRestart = function() {
+FM3Control.prototype.onRestart = function() {
     var self = this;
-    // Optional, use if you need it
+	// Optional, use if you need it
+	
+	self.closeSPIDevice();
+	self.initSPIDevice();
 };
 
 
 // Configuration Methods -----------------------------------------------------------------------------
 
-fm-3-control.prototype.getUIConfig = function() {
+FM3Control.prototype.getUIConfig = function() {
     var defer = libQ.defer();
     var self = this;
 
@@ -82,186 +88,38 @@ fm-3-control.prototype.getUIConfig = function() {
     return defer.promise;
 };
 
-fm-3-control.prototype.getConfigurationFiles = function() {
+FM3Control.prototype.getConfigurationFiles = function() {
 	return ['config.json'];
 }
 
-fm-3-control.prototype.setUIConfig = function(data) {
+FM3Control.prototype.setUIConfig = function(data) {
 	var self = this;
 	//Perform your installation tasks here
 };
 
-fm-3-control.prototype.getConf = function(varName) {
+FM3Control.prototype.getConf = function(varName) {
 	var self = this;
 	//Perform your installation tasks here
 };
 
-fm-3-control.prototype.setConf = function(varName, varValue) {
+FM3Control.prototype.setConf = function(varName, varValue) {
 	var self = this;
 	//Perform your installation tasks here
 };
 
+// fm-3-control specific methods
 
+FM3Control.prototype.initSPIDevice = function() {
 
-// Playback Controls ---------------------------------------------------------------------------------------
-// If your plugin is not a music_sevice don't use this part and delete it
-
-
-fm-3-control.prototype.addToBrowseSources = function () {
-
-	// Use this function to add your music service plugin to music sources
-    //var data = {name: 'Spotify', uri: 'spotify',plugin_type:'music_service',plugin_name:'spop'};
-    this.commandRouter.volumioAddToBrowseSources(data);
-};
-
-fm-3-control.prototype.handleBrowseUri = function (curUri) {
-    var self = this;
-
-    //self.commandRouter.logger.info(curUri);
-    var response;
-
-
-    return response;
-};
-
-
-
-// Define a method to clear, add, and play an array of tracks
-fm-3-control.prototype.clearAddPlayTrack = function(track) {
-	var self = this;
-	self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::clearAddPlayTrack');
-
-	self.commandRouter.logger.info(JSON.stringify(track));
-
-	return self.sendSpopCommand('uplay', [track.uri]);
-};
-
-fm-3-control.prototype.seek = function (timepos) {
-    this.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::seek to ' + timepos);
-
-    return this.sendSpopCommand('seek '+timepos, []);
-};
-
-// Stop
-fm-3-control.prototype.stop = function() {
-	var self = this;
-	self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::stop');
-
+	this.spi = SPI.initialize("/dev/spidev0.0");
+	this.spi.clockSpeed(1000000);
 
 };
 
-// Spop pause
-fm-3-control.prototype.pause = function() {
-	var self = this;
-	self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::pause');
+FM3Control.prototype.closeSPIDevice = function() {
 
-
-};
-
-// Get state
-fm-3-control.prototype.getState = function() {
-	var self = this;
-	self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::getState');
-
-
-};
-
-//Parse state
-fm-3-control.prototype.parseState = function(sState) {
-	var self = this;
-	self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::parseState');
-
-	//Use this method to parse the state and eventually send it with the following function
-};
-
-// Announce updated State
-fm-3-control.prototype.pushState = function(state) {
-	var self = this;
-	self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::pushState');
-
-	return self.commandRouter.servicePushState(state, self.servicename);
-};
-
-
-fm-3-control.prototype.explodeUri = function(uri) {
-	var self = this;
-	var defer=libQ.defer();
-
-	// Mandatory: retrieve all info for a given URI
-
-	return defer.promise;
-};
-
-fm-3-control.prototype.getAlbumArt = function (data, path) {
-
-	var artist, album;
-
-	if (data != undefined && data.path != undefined) {
-		path = data.path;
-	}
-
-	var web;
-
-	if (data != undefined && data.artist != undefined) {
-		artist = data.artist;
-		if (data.album != undefined)
-			album = data.album;
-		else album = data.artist;
-
-		web = '?web=' + nodetools.urlEncode(artist) + '/' + nodetools.urlEncode(album) + '/large'
-	}
-
-	var url = '/albumart';
-
-	if (web != undefined)
-		url = url + web;
-
-	if (web != undefined && path != undefined)
-		url = url + '&';
-	else if (path != undefined)
-		url = url + '?';
-
-	if (path != undefined)
-		url = url + 'path=' + nodetools.urlEncode(path);
-
-	return url;
-};
-
-
-
-
-
-fm-3-control.prototype.search = function (query) {
-	var self=this;
-	var defer=libQ.defer();
-
-	// Mandatory, search. You can divide the search in sections using following functions
-
-	return defer.promise;
-};
-
-fm-3-control.prototype._searchArtists = function (results) {
-
-};
-
-fm-3-control.prototype._searchAlbums = function (results) {
-
-};
-
-fm-3-control.prototype._searchPlaylists = function (results) {
-
-
-};
-
-fm-3-control.prototype._searchTracks = function (results) {
-
-};
-
-fm-3-control.prototype.goto=function(data){
-    var self=this
-    var defer=libQ.defer()
-
-// Handle go to artist and go to album function
-
-     return defer.promise;
+	this.spi.close(function(err){
+		self.commandRouter.logger.info('fm-3-control::onStop error closing SPI device:' + err);
+		self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::onStop error closing SPI device');
+	});
 };
