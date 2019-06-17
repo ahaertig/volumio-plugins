@@ -34,11 +34,16 @@ FM3Control.prototype.onStart = function() {
     var self = this;
 	var defer=libQ.defer();
 
-	self.initSPIDevice();
-	self.initSPITimers();
+	try {
+		self.initSPIDevice();
+		self.initSPITimers();
 
-	// Once the Plugin has successfull started resolve the promise
-	defer.resolve();
+		// Once the Plugin has successfull started resolve the promise
+		defer.resolve();	
+	} catch (error) {
+		self.logger.error(error);
+		defer.reject();
+	}
 
     return defer.promise;
 };
@@ -47,23 +52,36 @@ FM3Control.prototype.onStop = function() {
     var self = this;
     var defer=libQ.defer();
 
-	self.closeSPITimers();
-	self.closeSPIDevice();
+	try {
+		self.closeSPITimers();
+		self.closeSPIDevice();
+		
+		// Once the Plugin has successfull stopped resolve the promise
+		defer.resolve();
+	} catch (error) {
+		self.logger.error(error);
+		defer.reject;		
+	}
 
-    // Once the Plugin has successfull stopped resolve the promise
-    defer.resolve();
-
-    return libQ.resolve();
+    return defer;
 };
 
 FM3Control.prototype.onRestart = function() {
     var self = this;
-	// Optional, use if you need it
+    var defer=libQ.defer();
 	
-	self.closeSPITimers();
-	self.closeSPIDevice();
-	self.initSPIDevice();
-	self.initSPITimers();
+	try {
+		self.closeSPITimers();
+		self.closeSPIDevice();
+		self.initSPIDevice();
+		self.initSPITimers();
+		defer.resolve();
+	} catch (error) {
+		self.logger.error(error);
+		defer.reject();
+	}
+
+	return defer.promise;
 };
 
 
