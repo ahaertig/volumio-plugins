@@ -156,7 +156,7 @@ FM3Control.prototype.initSPITimers = function() {
 	var self = this;
 	
 	
-	var spiVolumeTimerTimeout = setInterval(self.spiVolumeTimerCallback(), 1000);
+	var spiVolumeTimerTimeout = setInterval(self.spiVolumeTimerCallback, 1000);
 	
 	self.timerTimouts = new Array(spiVolumeTimerTimeout);
 };
