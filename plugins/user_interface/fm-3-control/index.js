@@ -146,7 +146,7 @@ FM3Control.prototype.closeSPIDevice = function() {
 
 	self.logger.info('Closing SPI device \'/dev/spidev0.0\'');
 
-	this.spi.close(function(err){
+	self.spi.close(function(err){
 		self.commandRouter.logger.info('fm-3-control::onStop error closing SPI device:' + err);
 		self.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'fm-3-control::onStop error closing SPI device');
 	});
@@ -156,14 +156,9 @@ FM3Control.prototype.initSPITimers = function() {
 	var self = this;
 	
 	
-	var spiVolmumeTimerTimeout = setInterval(function() {  
-		
-		var txbuf = new Buffer([0x01, (9 + 0 << 4), 0x01]);
-		self.spi.transfer(txbuf, txbuf.length, self.spiVolumeTimer);		
-		
-	}, 1000);
+	var spiVolumeTimerTimeout = setInterval(self.spiVolumeTimerCallback(), 1000);
 	
-	self.timerTimouts = new Array(spiVolmumeTimerTimeout);
+	self.timerTimouts = new Array(spiVolumeTimerTimeout);
 };
 
 FM3Control.prototype.closeSPITimers = function() {
@@ -174,21 +169,25 @@ FM3Control.prototype.closeSPITimers = function() {
 	});
 };
 
-FM3Control.prototype.spiVolumeTimer = function(error, rxbuf) {
+FM3Control.prototype.spiVolumeTimerCallback = function(error, rxbuf) {
 	var self = this;
 
-    if (error) self.logger.error(error);
-    else self.logger.info(rxbuf);
-    
-    // Extract value from output buffer. Ignore first byte. 
-    var junk = rxbuf[0],
+	var txbuf = new Buffer([0x01, (9 + 0 << 4), 0x01]);
+	self.spi.transfer(txbuf, txbuf.length, function() {
+		
+		if (error) self.logger.error(error);
+		else self.logger.info(rxbuf);
+		
+		// Extract value from output buffer. Ignore first byte. 
+		var junk = rxbuf[0],
         MSB = rxbuf[1],
         LSB = rxbuf[2];
-
-    // Ignore first six bits of MSB, bit shift MSB 8 positions and 
-    // finally add LSB to MSB to get a full 10 bit value
-    var value = ((MSB & 3) << 8) + LSB; 
-    
-    self.logger.info(value);
-    
+		
+		// Ignore first six bits of MSB, bit shift MSB 8 positions and 
+		// finally add LSB to MSB to get a full 10 bit value
+		var value = ((MSB & 3) << 8) + LSB; 
+		
+		self.logger.info(value);
+		
+	});		
 }
