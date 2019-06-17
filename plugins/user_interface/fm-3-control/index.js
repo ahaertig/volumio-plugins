@@ -169,11 +169,11 @@ FM3Control.prototype.closeSPITimers = function() {
 	});
 };
 
-FM3Control.prototype.spiVolumeTimerCallback = function(error, rxbuf) {
+FM3Control.prototype.spiVolumeTimerCallback = function() {
 	var self = this;
 
 	var txbuf = new Buffer([0x01, (9 + 0 << 4), 0x01]);
-	self.spi.transfer(txbuf, txbuf.length, function() {
+	self.spi.transfer(txbuf, txbuf.length, function(error, rxbuf) {
 		
 		if (error) self.logger.error(error);
 		else self.logger.info(rxbuf);
