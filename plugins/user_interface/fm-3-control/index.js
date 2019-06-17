@@ -156,7 +156,27 @@ FM3Control.prototype.initSPITimers = function() {
 	var self = this;
 	
 	
-	var spiVolumeTimerTimeout = setInterval(self.spiVolumeTimerCallback, 1000);
+	var spiVolumeTimerTimeout = setInterval(function() {
+
+		var txbuf = new Buffer([0x01, (9 + 0 << 4), 0x01]);
+		self.spi.transfer(txbuf, txbuf.length, function(error, rxbuf) {
+			
+			if (error) self.logger.error(error);
+			else self.logger.info(rxbuf);
+			
+			// Extract value from output buffer. Ignore first byte. 
+			var junk = rxbuf[0],
+			MSB = rxbuf[1],
+			LSB = rxbuf[2];
+			
+			// Ignore first six bits of MSB, bit shift MSB 8 positions and 
+			// finally add LSB to MSB to get a full 10 bit value
+			var value = ((MSB & 3) << 8) + LSB; 
+			
+			self.logger.info(value);
+			
+		});		
+	}, 1000);
 	
 	self.timerTimouts = new Array(spiVolumeTimerTimeout);
 };
